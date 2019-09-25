@@ -1,61 +1,80 @@
 class FSM {
-    /**
-     * Creates new FSM instance.
-     * @param config
-     */
-    constructor(config) {}
+    constructor(config) {
+        if (config == undefined) throw new Error();
+        this.state = 'normal';
+        this.stateList = [[],[]];
+        this.config = config;
+        this.states = [];
+        for (let key in this.config.states) {
+            this.states.push(key);
+        }
+    }
 
-    /**
-     * Returns active state.
-     * @returns {String}
-     */
-    getState() {}
+    getState() {
+        return this.state;
+    }
 
-    /**
-     * Goes to specified state.
-     * @param state
-     */
-    changeState(state) {}
+    changeState(state) {
+        if (this.states.indexOf(state) == -1) {throw new Error()}
 
-    /**
-     * Changes state according to event transition rules.
-     * @param event
-     */
-    trigger(event) {}
+        if (state != this.state) {
+            this.stateList[0].push(this.state);
+        }
+        this.state = state;
+    }
 
-    /**
-     * Resets FSM state to initial.
-     */
-    reset() {}
+    trigger(event) {
+        let nowState = this.state;
 
-    /**
-     * Returns an array of states for which there are specified event transition rules.
-     * Returns all states if argument is undefined.
-     * @param event
-     * @returns {Array}
-     */
-    getStates(event) {}
+        if (this.config.states[nowState].transitions[event] === undefined) {
+            throw new Error();
+        }
 
-    /**
-     * Goes back to previous state.
-     * Returns false if undo is not available.
-     * @returns {Boolean}
-     */
-    undo() {}
+        this.stateList[0].push(nowState);
+        this.state = this.config.states[nowState].transitions[event];
+    }
 
-    /**
-     * Goes redo to state.
-     * Returns false if redo is not available.
-     * @returns {Boolean}
-     */
-    redo() {}
+    reset() {
+        this.stateList = [[],[]];
+        this.state = this.config.initial;
+    }
 
-    /**
-     * Clears transition history
-     */
-    clearHistory() {}
+    getStates(event) {
+        if (event == undefined) return this.states;
+
+        let states = [];
+
+    for (let key in this.config.states) {
+        if (this.config.states[key].transitions[event] != undefined) {
+            states.push(key);
+        }
+    }
+
+        return  states;
+    }
+
+    undo() {
+        if (this.stateList[0].length == 0) return false;
+
+        if (this.stateList[1] != this.state) {
+            this.stateList[1].push(this.state);
+        }
+        this.state = this.stateList[0].pop();
+        return true;
+    }
+
+    redo() {
+        if (this.stateList[1].length == 0) return false;
+
+        this.stateList[0].push(this.state);
+        this.state = this.stateList[1].pop();
+
+        return true;
+    }
+
+    clearHistory() {
+        this.stateList = [[],[]];
+    }
 }
 
 module.exports = FSM;
-
-/** @Created by Uladzimir Halushka **/
